@@ -64,8 +64,10 @@ app.post("/api/fill", async (req, res) => {
     addressCollection = userData.map((user, index) => {
       return {
         _id: userCollection[index]._id,
-        street: user.street,
-        city: user.city,
+        address: {
+          street: user.street,
+          city: user.city,
+        },
       };
     });
     await collection1.insertMany(userCollection);
@@ -86,8 +88,7 @@ app.post("/api/users", async (req, res) => {
     _id: new ObjectId(),
   };
   const userAddress = {
-    street: req.body.street,
-    city: req.body.city,
+    address: { street: req.body.address.street, city: req.body.address.city },
     _id: userInfo._id,
   };
   try {
@@ -107,6 +108,101 @@ app.post("/api/users", async (req, res) => {
     res
       .status(500)
       .send({ message: "An error occurred while processing your request" });
+  }
+});
+
+app.get("/api/users", async (req, res) => {
+  try {
+    const con = await client.connect();
+    const data = await con
+      .db("users")
+      .collection("info")
+      .aggregate([
+        {
+          $lookup: {
+            from: "address",
+            localField: "_id",
+            foreignField: "_id",
+            as: "Address",
+          },
+        },
+        {
+          $project: {
+            name: "$name",
+            email: "$email",
+            address: {
+              $arrayElemAt: ["$Address.address", 0],
+            },
+          },
+        },
+      ])
+      .toArray();
+    await con.close();
+    res.send(data);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ error: "An error occurred while processing the request." });
+  }
+});
+
+app.get("/api/users/names", async (req, res) => {
+  const con = await client.connect();
+  const data = await con
+    .db("users")
+    .collection("info")
+    .aggregate([
+      {
+        $project: {
+          name: "$name",
+        },
+      },
+    ])
+    .toArray();
+  await con.close();
+  res.send(data);
+});
+
+app.get("/api/users/emails", async (req, res) => {
+  const con = await client.connect();
+  const data = await con.db("users").collection("info").find().toArray();
+  await con.close();
+  res.send(data);
+});
+
+app.get("/api/users/address", async (req, res) => {
+  try {
+    const con = await client.connect();
+    const data = await con
+      .db("users")
+      .collection("info")
+      .aggregate([
+        {
+          $lookup: {
+            from: "address",
+            localField: "_id",
+            foreignField: "_id",
+            as: "Address",
+          },
+        },
+        {
+          $project: {
+            name: "$name",
+            address: {
+              $arrayElemAt: ["$Address.address", 0],
+            },
+          },
+        },
+      ])
+      .toArray();
+    await con.close();
+    res.send(data);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .send({ error: "An error occurred while processing the request." });
   }
 });
 

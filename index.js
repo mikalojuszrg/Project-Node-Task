@@ -31,7 +31,7 @@ async function getData() {
     return users;
   } catch (error) {
     console.error(error);
-    return { error: "Error fetching data from external API" };
+    return { error: "Error fetching data" };
   }
 }
 
@@ -48,7 +48,7 @@ app.post("/api/fill", async (req, res) => {
     const infoCount = await collection1.countDocuments();
     const addressCount = await collection2.countDocuments();
     if (infoCount > 0 || addressCount > 0) {
-      res.status(400).send({ error: "Collections contain data" });
+      res.status(400).send({ error: "Collections already contain data" });
       return;
     }
 
@@ -75,7 +75,7 @@ app.post("/api/fill", async (req, res) => {
     await con.close();
   } catch (error) {
     console.error(error);
-    res.send({ error: "Error connecting to MongoDB or inserting data" });
+    res.send({ error: "Error inserting data" });
     return;
   }
   res.send(userData);
@@ -105,9 +105,7 @@ app.post("/api/users", async (req, res) => {
     res.status(200).send({ infoData, addressData });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send({ message: "An error occurred while processing your request" });
+    res.status(500).send({ message: "An error to your request" });
   }
 });
 
@@ -141,9 +139,7 @@ app.get("/api/users", async (req, res) => {
     res.send(data);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send({ error: "An error occurred while processing the request." });
+    res.status(500).send({ error: "An error to your request" });
   }
 });
 
@@ -200,9 +196,7 @@ app.get("/api/users/address", async (req, res) => {
     res.send(data);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send({ error: "An error occurred while processing the request." });
+    res.status(500).send({ error: "An error to your request" });
   }
 });
 
